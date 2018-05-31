@@ -1,0 +1,286 @@
+---
+rules:
+  header:
+    default: 40.5
+  footer:
+    default: 754
+precision:
+  default: 0.5
+rootDataRecordType: "case"
+dataRecordTypes:
+  case:
+    label: case
+    nodeMembers:
+      - name
+      - notes
+      - caseType
+      - field3
+      - field4
+      - field5
+      - field6
+      - field7
+      - dispoDate
+      - dateCreated
+      - status
+initialState: "INIT"
+states:
+  INIT:
+    transitions:
+      -
+        condition: name
+        nextState: name
+  name: # last, first middle
+    kind: data
+    desc: "DefendantName"
+    startRecord: true
+    # In case there are 2 lines of name and zero one line of notes
+    # (do not start a new record for the 2nd line of name)
+    startRecordRequiredState: caseType
+    transitions:
+      -
+        # somtimes name is on 2 lines
+        nextState: name
+        condition: name
+      -
+        nextState: notes
+        condition: notes
+      -
+        nextState: caseTypeLabel
+        condition: caseTypeLabel
+  notes: # right side
+    kind: data
+    desc: "Notes"
+    transitions:
+      -
+        condition: notes
+        nextState: notes
+      -
+        condition: caseTypeLabel
+        nextState: caseTypeLabel
+      -
+        condition: field3
+        nextState: field3
+      -
+        condition: field4
+        nextState: field4
+      -
+        condition: field7
+        nextState: field7
+      -
+        condition: dispoDateLabel
+        nextState: dispoDateLabel
+      -
+        condition: dateCreatedLabel
+        nextState: dateCreatedLabel
+      -
+        condition: status
+        nextState: status
+      -
+        condition: name
+        nextState: name
+  caseTypeLabel: # "Case Type:"
+    kind: label
+    desc: "Severity"
+    transitions:
+      -
+        nextState: caseType
+        condition: caseType
+  caseType: # after caseTypeLabel
+    kind: data
+    desc: "CaseType"
+    transitions:
+      -
+        nextState: notes
+        condition: notes
+      -
+        nextState: field3
+        condition: field3
+      -
+        nextState: field4
+        condition: field4
+  field3: # under Case Type, nn-nnnnn-lll, sometimes not there.
+    kind: data
+    transitions:
+      -
+        nextState: field4
+        condition: field4
+  field4: # after field3 [ CAU, NA, ? ]
+    kind: data
+    transitions:
+      -
+        # must be after asterisk
+        nextState: field5
+        condition: field5
+  field5: # after field4 [ *, AMA, ? ]
+    kind: data
+    transitions:
+      -
+        nextState: field6
+        condition: field6
+  field6: # after field5 [ *, ? ]
+    kind: data
+    transitions:
+      -
+        nextState: notes
+        condition: notes
+      -
+        condition: field7
+        nextState: field7
+  field7: # line after field4, above Dispo Date, nnnnlnnnnn
+    kind: data
+    transitions:
+      -
+        nextState: dispoDateLabel
+        condition: dispoDateLabel
+      -
+        condition: notes
+        nextState: notes
+  dispoDateLabel:
+    kind: label
+    transitions:
+      -
+        nextState: dispoDate
+        condition: dispoDate
+  dispoDate:
+    kind: data
+    desc: "DispoDate"
+    transitions:
+      -
+        nextState: notes
+        condition: notes
+      -
+        nextState: dateCreatedLabel
+        condition: dateCreatedLabel
+  dateCreatedLabel:
+    kind: label
+    transitions:
+      -
+        nextState: dateCreated
+        condition: dateCreated
+  dateCreated:
+    kind: data
+    desc: "EntryDate"
+    transitions:
+      -
+        nextState: notes
+        condition: notes
+      -
+        nextState: status
+        condition: status
+  status:
+    kind: data
+    desc: "ChargeStatus"
+    transitions:
+      -
+        nextState: notes
+        condition: notes
+      -
+        nextState: name
+        condition: name
+conditions:
+  name:
+    matchNum:
+      ulx:
+        lowVal: 24
+        highVal: 148
+      lrx:
+        lowVal: 24
+        highVal: 148
+      fontSize:
+        lowVal: 8
+        highVal: 8.1
+  notes:
+    matchNum:
+      ulx:
+        lowVal: 149
+        highVal: 560
+  caseTypeLabel:
+    matchNum:
+      ulx:
+        lowVal: 23
+        highVal: 62
+    matchStr:
+      text:
+        string: "Case Type:"
+  caseType:
+    matchNum:
+      ulx:
+        lowVal: 70
+        highVal: 80
+  field3:
+    matchNum:
+      ulx:
+        lowVal: 20
+        highVal: 30
+      lrx:
+        lowVal: 45
+        highVal: 85
+    matchStr:
+      text:
+        isRegex: true
+        # NN-NNNNN-AA{2-4}, sometimes no dashes, sometimes no AA{2-4} at the end
+        # sometimes spaces where letters/numbers should be
+        string: "([0-9 ]{2}-[0-9 ]{5}-([A-Z ]{2,4})?)|([0-9 ]{2}[0-9 ]{5}[A-Z ]{3,4})"
+  field4:
+    matchNum:
+      ulx:
+        lowVal: 86
+        highVal: 92
+  field5:
+    matchNum:
+      ulx:
+        lowVal: 107
+        highVal: 108
+  field6:
+    matchNum:
+      ulx:
+        lowVal: 124
+        highVal: 126
+  field7:
+    matchNum:
+      ulx:
+        lowVal: 23
+        highVal: 26
+    matchStr:
+      text:
+        isRegex: true
+        string: "\\d{4}[A-Z]\\d{5,6}"
+  dispoDateLabel:
+    matchNum:
+      ulx:
+        lowVal: 23
+        highVal: 62
+    matchStr:
+      text:
+        string: "Dispo Date:"
+  dispoDate:
+    matchNum:
+      ulx:
+        lowVal: 64
+        highVal: 66
+    matchStr:
+      text:
+        isRegex: true
+        string: "\\d{1,2}/\\d{1,2}/\\d{4}"
+  dateCreatedLabel:
+    matchNum:
+      ulx:
+        lowVal: 23
+        highVal: 62
+    matchStr:
+      text:
+        string: "Date created:"
+  dateCreated:
+    matchNum:
+      ulx:
+        lowVal: 74
+        highVal: 76
+    matchStr:
+      text:
+        isRegex: true
+        string: "\\d{1,2}/\\d{1,2}/\\d{4}\\s*"
+  status:
+    matchNum:
+      ulx:
+        lowVal: 48
+        highVal: 52

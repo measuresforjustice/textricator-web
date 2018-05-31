@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script>
+            function handleRes(res,id) {
+                var box = document.getElementById(id)
+                if ( res.status == 200 ) {
+                    box.classList.remove("fail");
+                    box.classList.add("success");
+                } else {
+                    box.classList.remove("success");
+                    box.classList.add("fail");
+                }
+                box.value = res.responseText;
+            }
+            function setupTable(id,json) {
+                var table = document.getElementById(id);
+
+                // clear the existing table
+                while(table.firstChild) {
+                    table.removeChild(table.firstChild);
+                }
+
+                // build header
+                var row0 = json[0];
+                var thead = document.createElement("thead");
+                table.appendChild(thead);
+                var tr = document.createElement("tr");
+                thead.appendChild(tr);
+                for ( key in row0 ) {
+                    var th = document.createElement("th");
+                    tr.appendChild(th);
+                    th.appendChild( document.createTextNode( row0[key] ) );
+                }
+
+                // build body
+                var tbody = document.createElement("tbody");
+                table.appendChild(tbody);
+
+                for ( i = 1; i < json.length; i++ ) {
+                    var rowi = json[i];
+                    var tr = document.createElement("tr");
+                    tbody.appendChild(tr);
+
+                    for ( key in row0 ) {
+                        var td = document.createElement("td");
+                        tr.appendChild(td);
+                        var text = rowi[key];
+                        td.appendChild( document.createTextNode( text ) );
+                    }
+                }
+            }
+            function textResListener() {
+                console.log(this.responseText);
+                var json = JSON.parse(this.responseText);
+                json.splice(0,0,{
+                    "pageNumber":"page",
+                    "content":"text",
+                    "ulx":"ulx",
+                    "uly":"uly",
+                    "lrx":"lrx",
+                    "lry":"lry",
+                    "font":"font",
+                    "fontSize":"fontSize",
+                    "backgroundColor":"bg color"
+                });
+                setupTable('table_text',json);
+            }
+            function goText() {
+                var url = "./text";
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("GET",url,true);
+                xhttp.addEventListener("load",textResListener);
+                xhttp.send();
+            }
+            function fsmResListener() {
+                //handleRes(this,'csv')
+                var table = document.getElementById('table_fsm');
+                var textarea = document.getElementById('textarea_fsm');
+                var json = null
+                try {
+                    json = JSON.parse(this.responseText);
+                } catch ( err ) {
+                    console.log("invalid json response")
+                }
+                if ( this.status == 200 && json != null ) {
+                    setupTable('table_fsm',json);
+                    table.style.display = 'block';
+                    textarea.style.display = 'none';
+                } else {
+                    table.style.display = 'none';
+                    textarea.style.display = 'block';
+                    textarea.setAttribute('class','oops');
+                    textarea.value = this.responseText;
+                }
+            }
+            function fsmLogResListener() {
+                var table = document.getElementById('table_fsm');
+                var textarea = document.getElementById('textarea_fsm');
+                table.style.display = 'none';
+                textarea.style.display = 'block';
+                textarea.value = this.responseText;
+                if ( this.status == 200 ) {
+                    textarea.setAttribute('class','log');
+                } else {
+                    textarea.setAttribute('class','oops');
+                }
+            }
+            function goFsm() {
+                var url = "./form/jsonflat";
+                var postBody = editor.getValue();
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("POST",url,true);
+                xhttp.addEventListener("load",fsmResListener);
+                xhttp.send(postBody);
+            }
+            function goFsmLog() {
+                var url = "./form/log";
+                var postBody = editor.getValue();
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("POST",url,true);
+                xhttp.addEventListener("load",fsmLogResListener);
+                xhttp.send(postBody);
+            }
+            function setDownloadHref() {
+                var i = window.location.href.lastIndexOf('/');
+                var url = window.location.href.substring(0,i);
+                document.getElementById("downloadpdf").setAttribute('href',url);
+                return false;
+            }
+            function saveConfig() {
+                var a = document.createElement('a');
+                a.setAttribute('href','data:text/yaml;charset=utf-8,' + encodeURIComponent(editor.getValue()));
+                a.setAttribute('download','config.yaml');
+                if(document.createEvent){
+                    var event = document.createEvent('MouseEvents');
+                    event.initEvent('click',true,true);
+                    a.dispatchEvent(event);
+                } else {
+                    a.click();
+                }
+            }
+            function clearConfig() {
+                editor.setValue('');
+            }
+            function updateKeybinding() {
+                var cb = document.getElementById("vimode");
+                if ( cb.checked ) {
+                    editor.setKeyboardHandler("ace/keyboard/vim");
+                } else {
+                    editor.setKeyboardHandler(null);
+                }
+            }
+            function triggerLoad() {
+                var fileinput = document.getElementById("load");
+                if(document.createEvent){
+                    var event = document.createEvent('MouseEvents');
+                    event.initEvent('click',true,true);
+                    fileinput.dispatchEvent(event);
+                } else {
+                    fileinput.click();
+                }
+            }
+            function loadConfig() {
+                var fileinput = document.getElementById("load");
+                var file = fileinput.files[0];
+                if ( file ) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        editor.setValue( reader.result );
+                    };
+                    reader.readAsText(file);
+                }
+            }
+        </script>
+        <style>
+            body {
+                background-color: #eee;
+            }
+            div#areas {
+                position:fixed;
+                top:0;
+                right:0;
+                left:0;
+                bottom:0;
+                display:flex;
+                flex-direction:row;
+            }
+            div.box_left {
+                flex-basis:50%;
+                padding:0.5em;
+                display:flex;
+                flex-direction:column;
+            }
+            div.box_right {
+                flex-basis:100%;
+                padding:0.5em;
+                display:flex;
+                flex-direction:column;
+            }
+            div.box2 {
+                flex-basis:100%;
+                position:relative;
+                display:flex;
+                flex-direction:column;
+            }
+            table.dyna {
+                background-color:white;
+                display:block;
+                border:1px solid gray;
+                position:absolute;
+                top:2.5em;
+                left:0;
+                right:0;
+                bottom:0;
+                overflow:auto;
+                font-size:smaller;
+            }
+            table {
+                border-collapse:collapse;
+            }
+            th, td {
+                border: 1px solid black;
+                padding: 0.1em;
+            }
+            textarea.oops {
+                display:none;
+                border:1px solid red;
+                background-color: #ffeeee;
+                flex-basis:100%;
+                box-sizing: border-box;
+                white-space: pre;
+                margin-top:0.5em;
+                padding:0.5em;
+            }
+            textarea.log {
+                display:none;
+                border:1px solid black;
+                background-color: #ffffff;
+                flex-basis:100%;
+                box-sizing: border-box;
+                white-space: pre;
+                margin-top:0.5em;
+                padding:0.5em;
+            }
+            div#model {
+                box-sizing: border-box;
+                width:100%;
+                height:100%;
+                border:1px solid gray;
+            }
+            div.label div.right {
+                position:static;
+                float:right;
+            }
+            div.button {
+                text-align: center;
+            }
+            div.button a {
+                font-size:smaller;
+                white-space:nowrap;
+            }
+        </style>
+    </head>
+    <body onload="setDownloadHref()">
+        <form>
+            <div id="areas">
+                <div class="box_left">
+                    <div class="label">
+                        <div class="right">
+                            <a id="downloadpdf" download>Download PDF</a>
+                            |
+                            <a href="/">Help!</a>
+                        </div>
+                        FSM Model config (YAML):
+                    </div>
+                    <div style="font-size:smaller;margin-bottom:0.5em;margin-top:0.25em;">
+                        <div style="float:right">
+                            <input type="checkbox" id="vimode" name="vimode" onchange="updateKeybinding()">
+                            <label for="vimode">vi mode</label>
+                        </div>
+                        <button type="button" onclick="saveConfig();return true">save</button>
+                        &nbsp;
+                        <button type="button" onclick="triggerLoad();">load</button>
+                        <input type="file" id="load" name="load" onchange="loadConfig()" style="display:none">
+                        <!--
+                        &nbsp;
+                        <button type="button" onclick="clearConfig();return true">clear</button>
+                        -->
+                    </div>
+                    <div id="model">---
+# What you type in here is NOT automatically saved!
+# Use the "save" button.
+# Load a previously saved file with the "load" button.</div>
+                    <script src="/ace-builds/src-min/ace.js" type="text/javascript" charset="utf-8"></script>
+                    <script>
+                        var editor = ace.edit("model");
+                        editor.setTheme("ace/theme/textmate");
+                        editor.getSession().setMode("ace/mode/yaml");
+                        editor.getSession().setTabSize(2);
+                    </script>
+                </div>
+                <div class="box_right">
+                    <div class="box2">
+                        <div class="label">
+                            <div class="right"><button type="button" onclick="goText()">Extract text from PDF</button></div>
+                            Textboxes in PDF:
+                        </div>
+                        <table id="table_text" class="dyna">
+                        </table>
+                    </div>
+                    <hr>
+                    <div class="box2">
+                        <div class="label">
+                            <div class="right">
+                                <button type="button" onclick="goFsm()">Parse with FSM model</button>
+                                <button type="button" onclick="goFsmLog()">Show parse log</button>
+                            </div>
+                            Parsed data:
+                        </div>
+                        <textarea id="textarea_fsm" readonly class="oops"></textarea>
+                        <table id="table_fsm" class="dyna">
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </body>
+</html>

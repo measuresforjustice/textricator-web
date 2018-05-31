@@ -1,0 +1,3 @@
+**/*
+!target/docker/lib/*.jar
+!target/docker/jar/*.jar

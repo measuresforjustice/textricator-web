@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="default.css">
+        <script src="highlight.pack.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+        <meta charset="UTF-8">
+        <style>
+            pre {
+              border:1px solid gray;
+              background-color:#eeeeee;
+              margin:1em;
+            }
+
+        </style>
+    </head>
+    <body>
+        <h1><img style="height:1em;width:auto" src="./textricatorweb-logo-text-paths.svg" alt="Textricatorweb" title="TextricatorWeb"></h1>
+        <p>
+            This is a web service for <a href="https://textricator.mfj.io">Textricator</a>,
+            a library for parsing data from computer-generated PDF files.
+        </p>
+
+        <h2>Notes:</h2>
+        <ul>
+            <li>There is currently no way to upload PDFs.</li>
+        </ul>
+
+        <h2 id="webui">Web UI</h2>
+        <p>
+            <a href="/files/school-employee-list.pdf/ui">/files/school-employee-list.pdf/ui</a> shows a simple UI to use this service.
+        </p>
+        <p>
+            It has a link to download the PDF,
+            a button to show the raw text content of the PDF,
+            and allows you to type in the
+            <a href="#fsmmodel">configuration</a> for Textricator,
+            and click a button to parse the PDF and show the results.
+        </p>
+
+        <h2>Endpoints:</h2>
+
+        <h3>GET /files/</h3>
+        <p>
+            Get a list of available files.
+        </p>
+
+        <h3>GET /files/{id}.pdf</h3>
+        <p>
+            Download the PDF for the specified ID.
+        </p>
+
+        <h3>GET /files/{id}.pdf/text</h3>
+        <p>
+            Extract the raw text content of the PDF, as JSON.
+        </p>
+
+        <h3>POST /files/{id}.pdf/fsm/{format}</h3>
+        <p>
+            Request body: <a href="#fsmmodel">YAML configuration</a> for the FSM.
+        </p>
+        <p>
+            {format} options:
+        </p>
+        <ul>
+            <li>csv</li>
+            <li>json</li>
+        </ul>
+        <p>
+            Parse the PDF data, returning the result in the specified format.
+        </p>
+
+        <h3>GET /files/{id}.pdf/ui</h3>
+        <p>
+            Load the <a href="#webui">web UI</a> for the specified PDF.
+        </p>
+
+        <h2>Parser configuration</h2>
+
+        See <a href="https://github.com/measuresforjustice/textricator#form">the Textricator Github page</a>
+        for documentation on writing the parser configuration.
+
+        The "school-employee-list.pdf" for the example there is
+        <a href="/files/school-employee-list.pdf/ui">included in this service</a>.
+
+        <h2>Legal</h2>
+        <p>TextricatorWeb is licensed under the <a href="agplv3.txt">AGPLv3</a> (as is Textricator).</p>
+
+        <p>
+            Source code for TextricatorWeb ${version} is available at
+            <a href="https://github.com/measuresforjustice/textricator-web">https://github.com/measuresforjustice/textricator-web</a>
+        </p>
+        <p>
+            Source code for Textricator ${version.textricator} is available at
+            <a href="https://github.com/measuresforjustice/textricator">https://github.com/measuresforjustice/textricator</a>
+        </p>
+
+        <p>This service uses the following libraries:</p>
+        <ul>
+            <li><a href="https://itextpdf.com">iText ${version.itext5}</a> (<a href="/source/itextpdf-5.5.12-sources.jar">source</a>)</li>
+            <li><a href="https://itextpdf.com">iText ${version.itext7} kernel</a> (<a href="/source/kernel-7.1.0-sources.jar">source</a>)</li>
+            <li><a href="https://itextpdf.com">iText ${version.itext7} layout</a> (<a href="/source/layout-7.1.0-sources.jar">source</a>)</li>
+            <li><a href="https://github.com/measuresforjustice/expr">Expr</a></li>
+            <li><a href="https://kotlinlang.org">Kotlin</a></li>
+            <li><a href="https://www.slf4j.org">SLF4J</a></li>
+            <li><a href="https://github.com/measuresforjustice/expr">Expr</a></li>
+            <li><a href="https://pdfbox.apache.org">PDFBox</a></li>
+            <li><a href="https://commons.apache.org/proper/commons-csv/">Apache Commons CSV</a></li>
+            <li><a href="https://github.com/FasterXML/jackson">FasterXML Jackson</a></li>
+            <li><a href="https://github.com/google/gson">Gson</a></li>
+            <li><a href="https://github.com/docopt/docopt.java">docopt</a></li>
+            <li><a href="http://sparkjava.com">Spark</a></li>
+        </ul>
+
+        <img style="height:3em;width:auto" src="./textricator-mascot.svg" alt="Textricator mascot" title="Textricator mascot">
+
+    </body>
+</html>
