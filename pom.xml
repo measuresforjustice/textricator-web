@@ -6,18 +6,17 @@
 
   <groupId>io.mfj</groupId>
   <artifactId>textricator-web</artifactId>
-  <version>${version}</version>
+  <version>9.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <properties>
-    <version>9.0-SNAPSHOT</version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <kotlin.version>1.2.0</kotlin.version>
     <junit.version>4.12</junit.version>
     <docker.tag>mfj/textricator-web</docker.tag>
 
     <!-- If you change textricator version, make sure to update the itext versions if necessary. -->
-    <version.textricator>9.0.35</version.textricator>
+    <version.textricator>9.0.37</version.textricator>
     <version.itext5>5.5.12</version.itext5>
     <version.itext7>7.1.0</version.itext7>
   </properties>
