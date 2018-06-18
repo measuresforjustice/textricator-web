@@ -28,34 +28,37 @@
 
         <h2 id="webui">Web UI</h2>
         <p>
-            <a href="/files/school-employee-list.pdf/ui">/files/school-employee-list.pdf/ui</a> shows a simple UI to use this service.
-        </p>
-        <p>
-            It has a link to download the PDF,
+            The web UI for each PDF has a link to download the PDF,
             a button to show the raw text content of the PDF,
             and allows you to type in the
             <a href="#fsmmodel">configuration</a> for Textricator,
             and click a button to parse the PDF and show the results.
+        </p>
+        <p>
+            <a href="/files/">/files/</a> has links to the web UI pages for the available PDFs.
         </p>
 
         <h2>Endpoints:</h2>
 
         <h3>GET /files/</h3>
         <p>
-            Get a list of available files.
+            Get a list of available files. Produces <i>text/html</i> or <i>application/json</i>
         </p>
 
         <h3>GET /files/{id}.pdf</h3>
         <p>
-            Download the PDF for the specified ID.
+            Download the PDF for the specified ID. Produces <i>application/pdf</i>.
         </p>
 
         <h3>GET /files/{id}.pdf/text</h3>
         <p>
-            Extract the raw text content of the PDF, as JSON.
+            Extract the raw text content of the PDF, as JSON. Produces <i>application/json</i>.
         </p>
 
         <h3>POST /files/{id}.pdf/fsm/{format}</h3>
+        <p>
+            Parse the PDF data, returning the result in the specified format.
+        </p>
         <p>
             Request body: <a href="#fsmmodel">YAML configuration</a> for the FSM.
         </p>
@@ -63,12 +66,11 @@
             {format} options:
         </p>
         <ul>
-            <li>csv</li>
-            <li>json</li>
+            <li>csv - return structured data as CSV (produces <i>text/csv</i>)</li>
+            <li>json - return structured data as JSON (produces <i>application/json</i>)</li>
+            <li>jsonflat - return structured data as flattened JSON (produces <i>application/json</i>)</li>
+            <li>log - return the log of the parse (including errors), not the generated data (producses <i>text/plain</i>)</li>
         </ul>
-        <p>
-            Parse the PDF data, returning the result in the specified format.
-        </p>
 
         <h3>GET /files/{id}.pdf/ui</h3>
         <p>
@@ -77,11 +79,10 @@
 
         <h2>Parser configuration</h2>
 
+        <p>
         See <a href="https://github.com/measuresforjustice/textricator#form">the Textricator Github page</a>
         for documentation on writing the parser configuration.
-
-        The "school-employee-list.pdf" for the example there is
-        <a href="/files/school-employee-list.pdf/ui">included in this service</a>.
+        </p>
 
         <h2>Legal</h2>
         <p>TextricatorWeb is licensed under the <a href="agplv3.txt">AGPLv3</a> (as is Textricator).</p>

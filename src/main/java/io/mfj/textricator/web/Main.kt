@@ -39,10 +39,27 @@ object Main {
 
   private val mimeTypeMap = MimetypesFileTypeMap.getDefaultFileTypeMap()
 
+  /**
+   * @param args If not blank, first argument is a path to a directory containing PDFs to use. Subdirectories ignored.
+   */
   @JvmStatic
   fun main( args:Array<String> ) {
 
     staticFiles.location("/static")
+
+    val dir:File? = if ( args.isEmpty() ) null else File( args.first() )
+    val fileSource:FileSource =
+        when {
+          dir == null -> ResourcesFileSource
+          dir.isDirectory -> {
+            log.info( "PDFs from \"${dir}\"" )
+            DirectoryFileSource(dir)
+          }
+          else -> {
+            log.warn( "\"${dir}\" is not a directory. Using built-in PDFs" )
+            ResourcesFileSource
+          }
+        }
 
     // Get the help page
     get( "/", { req, res ->
@@ -56,7 +73,7 @@ object Main {
 
     redirect.get("/files", "/files/")
     get( "/files/" ) { req, res ->
-      val files = listOf( "school-employee-list.pdf" ) // TODO list uploads
+      val files = fileSource.list().sorted()
       val accept = req.headers("Accept")
       when ( accept ) {
         "application/json" -> {
@@ -73,8 +90,13 @@ object Main {
           <ul>
           ${
           files.map { file ->
-            "<li><a href=\"${URLEncoder.encode(file,"UTF-8")}\">${URLEncoder.encode(file,"UTF-8")}</a></li>"
-          }.joinToString()
+            """
+              <li>
+              <a href="${URLEncoder.encode(file,"UTF-8")}">${URLEncoder.encode(file,"UTF-8")}</a>
+              (<a href="${URLEncoder.encode(file,"UTF-8")}/ui">web ui</a>)
+              </li>
+            """
+          }.joinToString("")
           }
           </ul>
           </body>
@@ -119,7 +141,7 @@ object Main {
 
           if ( ! pages.isNullOrBlank() ) config.pages = pages
 
-          getFileStream(fileId).use { fileStream ->
+          fileSource.get(fileId).use { fileStream ->
 
             Textricator.parseForm(
                 input = fileStream,
@@ -173,7 +195,7 @@ object Main {
       val fileId = req.params(":fileId")
       val contentType = mimeTypeMap.getContentType(fileId)
       res.type(contentType)
-      getFileStream(fileId).use { stream ->
+      fileSource.get(fileId).use { stream ->
         res.raw().outputStream.use { os ->
           IOUtils.copy(stream,os)
         }
@@ -190,7 +212,7 @@ object Main {
 
       res.type("application/json")
 
-      getFileStream(fileId).use { fileStream ->
+      fileSource.get(fileId).use { fileStream ->
 
         res.raw().outputStream.use { os ->
           Textricator.extractText(
@@ -237,17 +259,6 @@ object Main {
       log.warn( "\$SOURCE_JAR_DIR \"${sourceJarDir}\" does not exist." )
     }
 
-  }
-
-  private fun getFileStream(fileId:String): InputStream {
-    // The file is on the classpath.
-    val key = "/files/${fileId.replace(Regex("/"),"")}"
-
-    try {
-      return Main::class.java.getResourceAsStream(key)
-    } catch ( e:Exception ) {
-      throw Exception( "Missing file: ${fileId}", e )
-    }
   }
 
 }
