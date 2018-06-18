@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.mfj</groupId>
@@ -9,14 +9,35 @@
   <version>9.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <kotlin.version>1.2.0</kotlin.version>
-    <junit.version>4.12</junit.version>
-    <docker.tag>mfj/textricator-web</docker.tag>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>Web interface for textricator.</description>
+  <url>https://textricator.mfj.io</url>
 
-    <!-- If you change textricator version, make sure to update the itext versions if necessary. -->
-    <version.textricator>9.0.37</version.textricator>
+  <developers>
+    <developer>
+      <name>Measures for Justice</name>
+      <email>opensource@measuresforjustice.org</email>
+      <organization>Measures for Justice</organization>
+      <organizationUrl>https://measuresforjustice.org/</organizationUrl>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>GNU Affero General Public License, Version 3</name>
+      <url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
+    </license>
+  </licenses>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <kotlin.version>1.2.31</kotlin.version>
+    <dokka.version>0.9.17</dokka.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <docker.tag>mfj/${project.artifactId}</docker.tag>
+    <deploymentDockerRegistry /> <!-- set this with -DdeploymentDockerRegistry in CI config  -->
+    <version.textricator>9.0.41</version.textricator> <!-- If you change this, update the itext versions if necessary. -->
     <version.itext5>5.5.12</version.itext5>
     <version.itext7>7.1.0</version.itext7>
   </properties>
@@ -145,16 +166,24 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
+        <groupId>org.jetbrains.dokka</groupId>
+        <artifactId>dokka-maven-plugin</artifactId>
+        <version>${dokka.version}</version>
+        <executions>
+          <execution>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>dokka</goal>
+              <goal>javadoc</goal>
+              <goal>javadocJar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
+        <version>3.0.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -236,6 +265,7 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>1.4.0</version>
             <executions>
+              <!-- build -->
               <execution>
                 <id>docker-build</id>
                 <phase>package</phase>
@@ -247,6 +277,19 @@
                   <commandlineArgs>build -t ${docker.tag}:${project.version} .</commandlineArgs>
                 </configuration>
               </execution>
+              <!-- tag latest -->
+              <execution>
+                <id>docker-tag-latest</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>docker</executable>
+                  <commandlineArgs>tag ${docker.tag}:${project.version} ${docker.tag}:latest</commandlineArgs>
+                </configuration>
+              </execution>
+              <!-- tag for deploy -->
               <execution>
                 <id>docker-push-tag</id>
                 <phase>deploy</phase>
@@ -258,6 +301,7 @@
                   <commandlineArgs>tag ${docker.tag}:${project.version} ${deploymentDockerRegistry}/${docker.tag}:${project.version}</commandlineArgs>
                 </configuration>
               </execution>
+              <!-- deploy -->
               <execution>
                 <id>docker-push</id>
                 <phase>deploy</phase>
