@@ -1,286 +1,324 @@
 ---
-rules:
-  header:
-    default: 40.5
-  footer:
-    default: 754
-precision:
-  default: 0.5
-rootDataRecordType: "case"
-dataRecordTypes:
-  case:
-    label: case
-    nodeMembers:
+# Use the pdfbox parser, since it's the same one we used to originally etract the text to build this planning document.
+extractor: "pdf.pdfbox"
+
+# All measurements are in points. 1 point = 1/72 of an inch.
+# x-coordinates are from the left edge of the page.
+# y-coordinates are from the top edge of the page.
+header:
+    # ignore anything less than this many points from the top, default and per-page
+  default: 130
+footer:
+    # ignore anything less than this many points from the bottom, default and per-page
+  default: 700
+
+# Text segments are generally parsed in order, top to bottom, left to right.
+# If two text segments have y-coordinates within this many points, consider them on the same line,
+# and process the one further left first, even if it is 0.4pt lower on the page.
+maxRowDistance: 2
+
+# Define the output data record.
+# Since the main record type we're collecting information on is our employees,
+# we'll have that be the root type for our harvested information.
+rootRecordType: employee
+recordTypes:
+  employee:
+    label: "employee" # Labels are used when nested recordTypes come into play, like this document.
+    valueTypes:
+      # Not sure what to name a valueType? Just make something up!
+      - employee
       - name
-      - notes
-      - caseType
-      - field3
-      - field4
-      - field5
-      - field6
-      - field7
-      - dispoDate
-      - dateCreated
-      - status
+      - hiredate
+      - occupation
+      - showinfo
+      - bool1
+      - bool2
+      - bool3
+      - salary
+    children:
+      # In this example, there are multiple children nested under an employee,
+      # so we'll treat it as a 'child' to the 'employee' recordType.
+      - child
+  child:
+    label: "child"
+    valueTypes:
+      - child
+      - grade
+
+valueTypes:
+  employee:
+    # In the CSV, use "Employee ID" as the column header instead of "employee".
+    label: "Employee ID"
+  name:
+    label: "Name"
+  hiredate:
+    label: "Hire Date"
+  occupation:
+    label: "Occupation"
+  salary:
+    label: "Salary"
+  showinfo:
+    label: "Important Info?"
+  bool1:
+    label: "Boolean 1"
+  bool2:
+    label: "Boolean 2"
+  bool3:
+    label: "Boolean 3"
+  child:
+    label: "Attending Child"
+  grade:
+    label: "Grade"
+
+# Now we define the finite-state machine
+# Let's name the state that our machine starts off with:
 initialState: "INIT"
+
+# When each text segment is encountered, each transition for the current state is checked.
 states:
   INIT:
     transitions:
+      # The first bit of text we reach is 'ID-0001', so we'll try the only transition that should work here.
+      -
+        # If this condition matches (which it should)
+        condition: employee # Curious about the condition? Sxroll further down to the conditions section of this YAML.
+        # Then we'll switch to the 'employee' state!
+        nextState: employee
+
+  employee: # ID number with the format 'ID-####'
+    startRecord: true # When we enter this stage, we'll create a new "case" record.
+    transitions:
+      - # Now we move on to the name label. Once again, by varifying the condition and moving on after that.
+        condition: namelabel
+        nextState: namelabel
+
+  namelabel:
+    include: false # The label isn't important information in and of itself, so we can just not include it in the data.
+    transitions:
       -
         condition: name
         nextState: name
-  name: # last, first middle
-    kind: data
-    desc: "DefendantName"
-    startRecord: true
-    # In case there are 2 lines of name and zero one line of notes
-    # (do not start a new record for the 2nd line of name)
-    startRecordRequiredState: caseType
-    transitions:
-      -
-        # somtimes name is on 2 lines
-        nextState: name
-        condition: name
-      -
-        nextState: notes
-        condition: notes
-      -
-        nextState: caseTypeLabel
-        condition: caseTypeLabel
-  notes: # right side
-    kind: data
-    desc: "Notes"
-    transitions:
-      -
-        condition: notes
-        nextState: notes
-      -
-        condition: caseTypeLabel
-        nextState: caseTypeLabel
-      -
-        condition: field3
-        nextState: field3
-      -
-        condition: field4
-        nextState: field4
-      -
-        condition: field7
-        nextState: field7
-      -
-        condition: dispoDateLabel
-        nextState: dispoDateLabel
-      -
-        condition: dateCreatedLabel
-        nextState: dateCreatedLabel
-      -
-        condition: status
-        nextState: status
-      -
-        condition: name
-        nextState: name
-  caseTypeLabel: # "Case Type:"
-    kind: label
-    desc: "Severity"
-    transitions:
-      -
-        nextState: caseType
-        condition: caseType
-  caseType: # after caseTypeLabel
-    kind: data
-    desc: "CaseType"
-    transitions:
-      -
-        nextState: notes
-        condition: notes
-      -
-        nextState: field3
-        condition: field3
-      -
-        nextState: field4
-        condition: field4
-  field3: # under Case Type, nn-nnnnn-lll, sometimes not there.
-    kind: data
-    transitions:
-      -
-        nextState: field4
-        condition: field4
-  field4: # after field3 [ CAU, NA, ? ]
-    kind: data
-    transitions:
-      -
-        # must be after asterisk
-        nextState: field5
-        condition: field5
-  field5: # after field4 [ *, AMA, ? ]
-    kind: data
-    transitions:
-      -
-        nextState: field6
-        condition: field6
-  field6: # after field5 [ *, ? ]
-    kind: data
-    transitions:
-      -
-        nextState: notes
-        condition: notes
-      -
-        condition: field7
-        nextState: field7
-  field7: # line after field4, above Dispo Date, nnnnlnnnnn
-    kind: data
-    transitions:
-      -
-        nextState: dispoDateLabel
-        condition: dispoDateLabel
-      -
-        condition: notes
-        nextState: notes
-  dispoDateLabel:
-    kind: label
-    transitions:
-      -
-        nextState: dispoDate
-        condition: dispoDate
-  dispoDate:
-    kind: data
-    desc: "DispoDate"
-    transitions:
-      -
-        nextState: notes
-        condition: notes
-      -
-        nextState: dateCreatedLabel
-        condition: dateCreatedLabel
-  dateCreatedLabel:
-    kind: label
-    transitions:
-      -
-        nextState: dateCreated
-        condition: dateCreated
-  dateCreated:
-    kind: data
-    desc: "EntryDate"
-    transitions:
-      -
-        nextState: notes
-        condition: notes
-      -
-        nextState: status
-        condition: status
-  status:
-    kind: data
-    desc: "ChargeStatus"
-    transitions:
-      -
-        nextState: notes
-        condition: notes
-      -
-        nextState: name
-        condition: name
-conditions:
+
   name:
-    matchNum:
-      ulx:
-        lowVal: 24
-        highVal: 148
-      lrx:
-        lowVal: 24
-        highVal: 148
-      fontSize:
-        lowVal: 8
-        highVal: 8.1
-  notes:
-    matchNum:
-      ulx:
-        lowVal: 149
-        highVal: 560
-  caseTypeLabel:
-    matchNum:
-      ulx:
-        lowVal: 23
-        highVal: 62
-    matchStr:
-      text:
-        string: "Case Type:"
-  caseType:
-    matchNum:
-      ulx:
-        lowVal: 70
-        highVal: 80
-  field3:
-    matchNum:
-      ulx:
-        lowVal: 20
-        highVal: 30
-      lrx:
-        lowVal: 45
-        highVal: 85
-    matchStr:
-      text:
-        isRegex: true
-        # NN-NNNNN-AA{2-4}, sometimes no dashes, sometimes no AA{2-4} at the end
-        # sometimes spaces where letters/numbers should be
-        string: "([0-9 ]{2}-[0-9 ]{5}-([A-Z ]{2,4})?)|([0-9 ]{2}[0-9 ]{5}[A-Z ]{3,4})"
-  field4:
-    matchNum:
-      ulx:
-        lowVal: 86
-        highVal: 92
-  field5:
-    matchNum:
-      ulx:
-        lowVal: 107
-        highVal: 108
-  field6:
-    matchNum:
-      ulx:
-        lowVal: 124
-        highVal: 126
-  field7:
-    matchNum:
-      ulx:
-        lowVal: 23
-        highVal: 26
-    matchStr:
-      text:
-        isRegex: true
-        string: "\\d{4}[A-Z]\\d{5,6}"
-  dispoDateLabel:
-    matchNum:
-      ulx:
-        lowVal: 23
-        highVal: 62
-    matchStr:
-      text:
-        string: "Dispo Date:"
-  dispoDate:
-    matchNum:
-      ulx:
-        lowVal: 64
-        highVal: 66
-    matchStr:
-      text:
-        isRegex: true
-        string: "\\d{1,2}/\\d{1,2}/\\d{4}"
-  dateCreatedLabel:
-    matchNum:
-      ulx:
-        lowVal: 23
-        highVal: 62
-    matchStr:
-      text:
-        string: "Date created:"
-  dateCreated:
-    matchNum:
-      ulx:
-        lowVal: 74
-        highVal: 76
-    matchStr:
-      text:
-        isRegex: true
-        string: "\\d{1,2}/\\d{1,2}/\\d{4}\\s*"
-  status:
-    matchNum:
-      ulx:
-        lowVal: 48
-        highVal: 52
+    transitions:
+      -
+        # Sometimes a name will be in two segments, and we'll hit another 'name' text segment before anything else.
+        # In that case, a state can transition to itself, compounding the information picked up in it.
+        condition: name
+        nextState: name
+      -
+        # Does the first condition not match the text? We move onto the next one.
+        condition: hiredateLabel
+        nextState: hiredateLabel
+
+  hiredateLabel:
+    include: false
+    transitions:
+      -
+        condition: hiredateLabel
+        nextState: hiredateLabel
+      -
+        condition: hiredate
+        nextState: hiredate
+
+  hiredate:
+    transitions:
+      -
+        condition: occupationLabel
+        nextState: occupationLabel
+
+  occupationLabel:
+    include: false
+    transitions:
+      -
+        condition: occupation
+        nextState: occupation
+
+  occupation:
+    transitions:
+      -
+        condition: occupation
+        nextState: occupation
+      -
+        # This state and the next are an example of how you can choose, using conditions, what to include or not.
+        # They share the same area of a document, but have qualities to them that can be distinguishable.
+        # Does it meet 'showinfo' conditions? Then we go to the 'showinfo' state that includes it.
+        condition: showinfo
+        nextState: showinfo
+      -
+        # Doesn't meet 'showinfo'? Then check for 'notinfo' and exclude it.
+        condition: notinfo
+        nextState: notinfo
+  showinfo:
+    transitions:
+      -
+        condition: showinfo
+        nextState: showinfo
+      -
+        condition: bool1
+        nextState: bool1
+  notinfo:
+    include: false
+    transitions:
+      -
+        condition: notinfo
+        nextState: notinfo
+      -
+        condition: bool1
+        nextState: bool1
+
+  bool1:
+    transitions:
+      -
+        condition: bool2
+        nextState: bool2
+  bool2:
+    transitions:
+      -
+        condition: bool3
+        nextState: bool3
+  bool3:
+    transitions:
+      -
+        condition: salaryLabel
+        nextState: salaryLabel
+
+  salaryLabel:
+    include: false
+    transitions:
+      -
+        condition: salary
+        nextState: salary
+
+  salary:
+    transitions:
+      -
+        condition: childrenLabel
+        nextState: childrenLabel
+      -
+        condition: employee
+        nextState: employee
+      -
+        condition: end
+        nextState: end
+
+  childrenLabel:
+    include: false
+    transitions:
+      -
+        condition: childrenLabel
+        nextState: childrenLabel
+      -
+        condition: childLabel
+        nextState: childLabel
+
+  childLabel:
+    include: false
+    transitions:
+      -
+        condition: child
+        nextState: child
+
+  child:
+    # Here we reach a datatype nested within another datatype. We can start records using this child datatype.
+    # In the process, we'll be making multiple rows for the parent datatype, each one holding onto it's own child.
+    startRecord: true
+    transitions:
+      -
+        condition: child
+        nextState: child
+      -
+        condition: gradeLabel
+        nextState: gradeLabel
+      -
+        condition: childLabel
+        nextState: childLabel
+
+  gradeLabel:
+    include: false
+    transitions:
+      -
+        # Normally, there would always been an instance of a grade appearing right after the label.
+        # But in this document, we have one instance of that not happening under ID-0007's child.
+        condition: grade
+        nextState: grade
+      -
+        # So we just account for that possibility by adding a transition out of the label.
+        condition: employee
+        nextState: employee
+
+  grade:
+    transitions:
+      -
+        condition: employee
+        nextState: employee
+      -
+        condition: childLabel
+        nextState: childLabel
+      -
+        # Reach the end of the usable info in a document, but there's still text left to go?
+        # An easy fix is to just create a looping, not-included state to finish the document off.
+        condition: end
+        nextState: end
+
+  end:
+    # We reached a point in the document where all the useful information is gone, but we still have text to go.
+    include: false
+    transitions:
+      -
+        # By using an always-true condition such as 'any', we can loop this state until the document has been completely gone through.
+        condition: any
+        nextState: end
+
+# Here we define the conditions:
+conditions:
+
+  # An example of comparing text with regex.
+  # In this case, we're making sure that the text contains the characters 'ID-' followed by any amount of numbers.
+  employee: 'text =~ /ID-(\\d)*/'
+
+  # You can match based on the x- and y- coordinates of the upper left and lower right corners of the rectangle
+  # containing the text. ulx = Upper-Left X-coordinate. lry = Lower-Right Y-coordinate. Also uly and lrx.
+  # You can define the lower and upper limit for each, inclusive.
+  namelabel: '70 < ulx < 80 and font = "BCDFEE+Calibri-Bold"'
+
+  # You can also match based on the type of font used, including if it was bolded or italicized.
+  name: '112 < ulx < 200 and font = "BCDEEE+Calibri"'
+
+  hiredateLabel: '230 < ulx < 270 and font = "BCDFEE+Calibri-Bold"'
+
+  hiredate: '280 < ulx < 290 and font = "BCDEEE+Calibri"'
+
+  occupationLabel: '391 < ulx < 393 and font = "BCDFEE+Calibri-Bold"'
+
+  occupation: '394 < ulx < 700 and font = "BCDEEE+Calibri"'
+
+  showinfo: 'font = "BCDJEE+Georgia"'
+
+  notinfo:  'font = "BCDEEE+Calibri"'
+
+  bool1:  'font = "BCDIEE+Cambria"'
+
+  bool2:  'font = "BCDIEE+Cambria"'
+
+  bool3:  'font = "BCDIEE+Cambria"'
+
+  salaryLabel: '391 < ulx < 393 and font = "BCDFEE+Calibri-Bold"'
+
+  salary: '394 < ulx < 700 and font = "BCDEEE+Calibri"'
+
+  childrenLabel: '70 < ulx < 140 and font = "BCDFEE+Calibri-Bold" and text =~ /(Attending)|(Children:)/'
+
+  childLabel: '230 < ulx < 240 and font = "BCDFEE+Calibri-Bold"'
+
+  child: '230 < ulx < 380 and font = "BCDEEE+Calibri"'
+
+  gradeLabel: '391 < ulx < 393 and font = "BCDFEE+Calibri-Bold"'
+
+  grade: '394 < ulx < 700 and font = "BCDEEE+Calibri"'
+
+  # You can also match based on the size of the font and on specific text.
+  end: 'fontSize = 16.0 and text = "TOTAL:"'
+
+  # Need a condition that is always true? "1=1" does that for you.
+  any: "1 = 1"
