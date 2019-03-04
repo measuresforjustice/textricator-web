@@ -62,14 +62,14 @@ object Main {
         }
 
     // Get the help page
-    get( "/", { req, res ->
+    get( "/" ) { req, res ->
       res.type("text/html")
       Main::class.java.getResourceAsStream("/static/index.html").use { i ->
         res.raw().outputStream.use { o ->
           IOUtils.copy(i,o)
         }
       }
-    } )
+    }
 
     redirect.get("/files", "/files/")
     get( "/files/" ) { req, res ->
@@ -109,7 +109,7 @@ object Main {
 
     // Run the parser
     // /files/{foo.pdf}/process <- yml
-    post("/files/:fileId/form/:format", { req, res ->
+    post("/files/:fileId/form/:format") { req, res ->
       val fileId = req.params(":fileId")
       val format = req.params(":format")
       val pages = req.queryParams("pages")
@@ -177,10 +177,10 @@ object Main {
         }
       }
       res.status(status)
-    } )
+    }
 
     // Get the parse UI
-    get("/files/:fileId/ui", { req, res ->
+    get("/files/:fileId/ui") { req, res ->
       res.type("text/html")
       Main::class.java.getResourceAsStream("/static/ui.html").use { i ->
         res.raw().outputStream.use { o ->
@@ -188,10 +188,10 @@ object Main {
         }
       }
       res.status(200)
-    })
+    }
 
     // Download the file
-    get("/files/:fileId", { req, res ->
+    get("/files/:fileId") { req, res ->
       val fileId = req.params(":fileId")
       val contentType = mimeTypeMap.getContentType(fileId)
       res.type(contentType)
@@ -201,10 +201,10 @@ object Main {
         }
       }
 
-    })
+    }
 
     // Extract text
-    get("/files/:fileId/text", { req, res ->
+    get("/files/:fileId/text") { req, res ->
       val fileId = req.params(":fileId")
       val pages = req.queryParams("pages")
       val inputFormat = req.queryParams("format") ?: File(fileId).extension
@@ -226,7 +226,7 @@ object Main {
       }
 
       res.status(200)
-    } )
+    }
 
     // return source jars for agpl-licensed dependencies
 

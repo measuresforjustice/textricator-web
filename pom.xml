@@ -37,7 +37,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <docker.tag>mfj/${project.artifactId}</docker.tag>
     <deploymentDockerRegistry /> <!-- set this with -DdeploymentDockerRegistry in CI config  -->
-    <version.textricator>9.1.47</version.textricator> <!-- If you change this, update the itext versions if necessary. And update src/main/resources/static/index.html. -->
+    <version.textricator>9.1.49</version.textricator> <!-- If you change this, update the itext versions if necessary. And update src/main/resources/static/index.html. -->
     <version.itext5>5.5.13</version.itext5>
     <version.itext7>7.1.4</version.itext7>
   </properties>
