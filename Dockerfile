@@ -1,4 +1,5 @@
 FROM java:8-jre-alpine
+RUN apk upgrade --no-cache
 USER nobody
 EXPOSE 4567/tcp
 ENV SOURCE_JAR_DIR=/app/lib
