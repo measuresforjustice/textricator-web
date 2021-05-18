@@ -16,7 +16,6 @@ with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package io.mfj.textricator.web
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.mfj.textricator.Textricator
 import io.mfj.textricator.form.FormParseEventListener
 import io.mfj.textricator.form.LoggingEventListener
@@ -25,19 +24,19 @@ import io.mfj.textricator.form.config.FormParseConfigUtil
 import io.mfj.textricator.text.toPageFilter
 
 import java.io.*
-import javax.activation.MimetypesFileTypeMap
+import java.net.URLConnection
+import java.net.URLEncoder
+
+import com.fasterxml.jackson.databind.ObjectMapper
 
 import org.slf4j.LoggerFactory
 
 import spark.Spark.*
 import spark.utils.IOUtils
-import java.net.URLEncoder
 
 object Main {
 
   private val log = LoggerFactory.getLogger(Main::class.java)
-
-  private val mimeTypeMap = MimetypesFileTypeMap.getDefaultFileTypeMap()
 
   /**
    * @param args If not blank, first argument is a path to a directory containing PDFs to use. Subdirectories ignored.
@@ -193,7 +192,7 @@ object Main {
     // Download the file
     get("/files/:fileId") { req, res ->
       val fileId = req.params(":fileId")
-      val contentType = mimeTypeMap.getContentType(fileId)
+      val contentType = getMimeType(fileId)
       res.type(contentType)
       fileSource.get(fileId).use { stream ->
         res.raw().outputStream.use { os ->
@@ -260,5 +259,9 @@ object Main {
     }
 
   }
+
+  private val fileNameMap = URLConnection.getFileNameMap()
+
+  private fun getMimeType(name:String):String = fileNameMap.getContentTypeFor(name) ?: "application/octet-stream"
 
 }

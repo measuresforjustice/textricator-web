@@ -6,7 +6,7 @@
 
   <groupId>io.mfj</groupId>
   <artifactId>textricator-web</artifactId>
-  <version>9.2-SNAPSHOT</version>
+  <version>9.4-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>${project.groupId}:${project.artifactId}</name>
@@ -32,14 +32,13 @@
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <kotlin.version>1.3.50</kotlin.version>
-    <dokka.version>0.9.18</dokka.version>
+    <kotlin.version>1.4.32</kotlin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <docker.tag>mfj/${project.artifactId}</docker.tag>
     <deploymentDockerRegistry /> <!-- set this with -DdeploymentDockerRegistry in CI config  -->
-    <version.textricator>9.2.58</version.textricator> <!-- If you change this, update the itext versions if necessary. And update src/main/resources/static/index.html. -->
-    <version.itext5>5.5.13.1</version.itext5>
-    <version.itext7>7.1.7</version.itext7>
+    <version.textricator>9.4.64</version.textricator> <!-- If you change this, update the itext versions if necessary. And update src/main/resources/static/index.html. -->
+    <version.itext5>5.5.13.2</version.itext5>
+    <version.itext7>7.1.15</version.itext7>
   </properties>
 
   <dependencies>
@@ -78,13 +77,13 @@
     <dependency>
       <groupId>com.sparkjava</groupId>
       <artifactId>spark-core</artifactId>
-      <version>2.7.2</version>
+      <version>2.9.3</version>
       <!-- Apache 2.0 -->
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.8.0</version>
+      <version>2.8.6</version>
       <!-- Apache 2.0 -->
     </dependency>
 
@@ -168,7 +167,7 @@
       <plugin>
         <groupId>org.jetbrains.dokka</groupId>
         <artifactId>dokka-maven-plugin</artifactId>
-        <version>${dokka.version}</version>
+        <version>${kotlin.version}</version>
         <executions>
           <execution>
             <phase>prepare-package</phase>
@@ -183,7 +182,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -228,7 +227,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.10</version>
+            <version>3.1.2</version>
             <executions>
               <execution>
                 <id>docker-prep-lib</id>
@@ -263,7 +262,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.4.0</version>
+            <version>3.0.0</version>
             <executions>
               <!-- build -->
               <execution>
