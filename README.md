@@ -1,8 +1,9 @@
 # TextricatorWeb
 
-Web UI for [Textricator](https://textricator.mfj.io).
+TextricatorWeb is a web UI for [Textricator](https://github.com/measuresforjustice/textricator).
 
-[Textricator source code](https://github.com/measuresforjustice/textricator)
+_TextricatorWeb_, like _Textricator_ is released under the
+[GNU Affero General Public License Version 3](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
 ## Building:
 
